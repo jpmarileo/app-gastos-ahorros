@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mis Ahorros JP</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f4f4f4;
+    }
+    header {
+      background: #1e88e5;
+      color: white;
+      padding: 15px;
+      text-align: center;
+    }
+    .saldo {
+      font-size: 28px;
+      font-weight: bold;
+      text-align: center;
+      margin: 20px 0;
+      padding: 15px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    button {
+      width: 100%;
+      padding: 15px;
+      margin: 8px 0;
+      font-size: 18px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .btn-ingreso { background: #43a047; color: white; }
+    .btn-gasto { background: #e53935; color: white; }
+    .movimientos {
+      margin-top: 20px;
+      padding: 0 10px;
+    }
+    .item {
+      background: white;
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .positivo { color: #43a047; }
+    .negativo { color: #e53935; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Mis Ahorros JP</h1>
+  </header>
+
+  <div class="saldo">
+    Saldo actual: $<span id="saldo">0</span>
+  </div>
+
+  <div style="padding: 10px;">
+    <button class="btn-ingreso" onclick="registrarIngreso()">➕ Registrar Pago Recibido</button>
+    <button class="btn-gasto" onclick="registrarGasto()">➖ Registrar Gasto</button>
+  </div>
+
+  <div class="movimientos">
+    <h2>Últimos movimientos</h2>
+    <div id="lista-movimientos"></div>
+  </div>
+
+  <script>
+    let movimientos = JSON.parse(localStorage.getItem('movimientos')) || [];
+
+    function guardarDatos() {
+      localStorage.setItem('movimientos', JSON.stringify(movimientos));
+      actualizarSaldo();
+      mostrarMovimientos();
+    }
+
+    function actualizarSaldo() {
+      let saldo = movimientos.reduce((acc, mov) => acc + mov.monto, 0);
+      document.getElementById('saldo').textContent = saldo.toLocaleString('es-CL');
+    }
+
+    function mostrarMovimientos() {
+      const lista = document.getElementById('lista-movimientos');
+      lista.innerHTML = '';
+      
+      movimientos.slice().reverse().forEach(mov => {
+        const div = document.createElement('div');
+        div.className = 'item';
+        div.innerHTML = `
+          <div>
+            <strong>${mov.descripcion}</strong><br>
+            <small>${mov.fecha}</small>
+          </div>
+          <div class="${mov.monto > 0 ? 'positivo' : 'negativo'}">
+            ${mov.monto > 0 ? '+' : ''}$${mov.monto.toLocaleString('es-CL')}
+          </div>
+        `;
+        lista.appendChild(div);
+      });
+    }
+
+    function registrarIngreso() {
+      const monto = parseInt(prompt("¿Cuánto dinero recibiste?"));
+      if (!monto || monto <= 0) return alert("Ingresa un monto válido");
+
+      const descripcion = prompt("Descripción (ej: Sueldo Mayo)", "Pago recibido");
+      
+      movimientos.push({
+        tipo: "ingreso",
+        monto: monto,
+        descripcion: descripcion,
+        fecha: new Date().toLocaleDateString('es-CL')
+      });
+      
+      guardarDatos();
+    }
+
+    function registrarGasto() {
+      const monto = parseInt(prompt("¿Cuánto gastaste?"));
+      if (!monto || monto <= 0) return alert("Ingresa un monto válido");
+
+      const categorias = ["Compras compulsivas", "Comida chatarra", "Alcohol y cigarros", "Ropa deportiva/invierno", "Juegos Steam", "Mercadería", "Pasajes", "Agua", "Luz", "Internet", "Pago préstamos", "Otros"];
+      let catTexto = "";
+      
+      categorias.forEach((cat, i) => {
+        catTexto += `${i+1}. ${cat}\n`;
+      });
+      
+      const categoriaNum = parseInt(prompt(`Elige categoría:\n\n${catTexto}`));
+      const categoria = categorias[categoriaNum-1] || "Otros";
+
+      const descripcion = prompt("Descripción adicional (opcional)", categoria);
+      
+      movimientos.push({
+        tipo: "gasto",
+        monto: -monto,
+        descripcion: descripcion,
+        fecha: new Date().toLocaleDateString('es-CL')
+      });
+      
+      guardarDatos();
+    }
+
+    // Inicializar
+    actualizarSaldo();
+    mostrarMovimientos();
+  </script>
+</body>
+</html>
